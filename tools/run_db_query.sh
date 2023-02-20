@@ -1,0 +1,1 @@
+docker run --rm -v /home/ahenao/net-discovery/tools:/app -v /home/ahenao/net-discovery/data:/data --workdir /app --entrypoint /usr/local/bin/python py_dbs ./sscd_db.py > /home/ahenao/net-discovery/logs/sscd_db.out 2>&1

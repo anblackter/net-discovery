@@ -1,0 +1,1 @@
+python3 tools/nmap.py > /home/ahenao/net-discovery/logs/nmap.out 2>&1

@@ -1,3 +1,14 @@
+#Project Specific
+/data/
+/logs/
+
+#notes
+notes.txt
+result
+
+# vscode
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
