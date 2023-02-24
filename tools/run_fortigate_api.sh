@@ -1,0 +1,1 @@
+python3 tools/fortigate_api.py >> /home/ahenao/net-discovery/logs/fortigate_api.out 2>&1

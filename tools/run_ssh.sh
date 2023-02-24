@@ -1,0 +1,1 @@
+python3 tools/ssh.py >> /home/ahenao/net-discovery/logs/ssh.out 2>&1

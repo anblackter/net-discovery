@@ -14,18 +14,17 @@ def get_elapsep_time(initial_time):
 def run():
     initial_time = datetime.now()
     print(f'INITIAL TIME ------------------ {initial_time}')
-    lines = run_query("SELECT * FROM SSCD_CI_SECURITY_IP WHERE SPEC_VALUE REGEXP '([0-9]{1,3}\.){3}[0-9]{1,3}'")
+    lines = run_query("SELECT * FROM CONSOLIDATED_FW")
     counter = 0
     ip_list = []
     for line in lines:
-        counter += 1
-        line_id = line['CONFIG_ITEM_ID']
-        ip = re.search(r"([0-9]{1,3}\.){3}[0-9]{1,3}",line['SPEC_VALUE']).group(0)
-        update_query(f'UPDATE SSCD_CI_SECURITY_IP SET IP = "{ip}" WHERE CONFIG_ITEM_ID = {line_id}')
+        ip = line['IP']
         ip_list.append(ip)
+        # counter += 1
         # if counter > 9:
         #     break
     # print(ip_list)
+    print(f'ELAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
 
     updates = []
 
@@ -33,7 +32,7 @@ def run():
         with os.popen(f"ping {ip} -c 2 -w {timeout}") as ping:
             return ping.read()
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=200) as executor:
         ping_answer = {executor.submit(run_ping, ip, 2): ip for ip in ip_list}
         for future in as_completed(ping_answer):
             ip = ping_answer[future]
@@ -44,12 +43,13 @@ def run():
                 print('%r generated an exception: %s' % (ip, exc))
             else:
                 print('%r answer is %s packets' % (ip, data))
-                updates.append(f'UPDATE SSCD_CI_SECURITY_IP SET ANSWER_PING = {data} WHERE IP = "{ip}"')
+                updates.append(f'UPDATE CONSOLIDATED_FW SET PING_ANSWER = {data} WHERE IP = "{ip}"')
 
+    print(f'ELAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
     for update in updates:
         update_query(update)
     print(f'FINAL TIME ------------------ {datetime.now()}')
-    print(f'ENLAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
+    print(f'ELAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
 
 if __name__ == '__main__':
     run()

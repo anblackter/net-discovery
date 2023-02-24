@@ -90,7 +90,7 @@ def run():
 
     sql_query = pd.read_sql_query(QUERY_CI_SECURITY_IP, con = con)
     df = pd.DataFrame(sql_query)
-    df.to_csv(r'/data/ci_security_ip.csv', index = False, header=False, sep=';')
+    df.to_csv(r'/data/ci_security_ip_transition.csv', index = False, header=False, sep=';')
 
 if __name__ == '__main__':
     run()
