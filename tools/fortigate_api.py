@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import re
 from datetime import datetime
 from config import Credenditals
@@ -13,7 +14,18 @@ def get_elapsep_time(initial_time):
     elapsed_time = datetime.strptime(str(diff_time), '%H:%M:%S.%f')
     return elapsed_time.strftime('%H:%M:%S.%f')
 
-def run():
+def read_args():
+    arguments = sys.argv
+    arguments.pop(0)
+
+    if 'CRED_LIST_FW_1' in arguments:
+        credentials = Credenditals.CRED_LIST_FW_1
+        api(credentials)
+    elif 'CRED_LIST_FW_2' in arguments:
+        credentials = Credenditals.CRED_LIST_FW_2
+        api(credentials)
+
+def api(credentials):
     initial_time = datetime.now()
     print(f'INITIAL TIME ------------------ {initial_time}')
     lines = run_query("SELECT IP, NMAP_PORTS FROM CONSOLIDATED_FW \
@@ -39,7 +51,7 @@ def run():
         port = ip_port.split('_')[1]
         firewall = {
                 'hostname' : ip,
-                'credential_list' : Credenditals.CRED_LIST_FW_2,
+                'credential_list' : credentials,
                 'port' : port
             }
         fw = FortiGateAPI(**firewall)
@@ -80,6 +92,13 @@ def run():
 
     print(f'FINAL TIME ------------------ {datetime.now()}')
     print(f'ELAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
+
+
+def run():
+    try:
+        read_args()
+    except KeyboardInterrupt:
+        print('\nKeyboard Interrupt')
 
 if __name__ == '__main__':
     run()

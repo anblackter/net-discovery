@@ -43,8 +43,6 @@ class BaseError(NetmikoBaseException):
     def __init__(self):
         super().__init__('Error_Base_Error')
 
-
-
 # Logging filter for #2597
 class SecretsFilter(logging.Filter):
     def __init__(self, no_log: Optional[Dict[Any, str]] = None) -> None:
@@ -329,7 +327,7 @@ class GenericConnectionHandler():
 
 
     def run_command(self, command):
-        time.sleep(self.delay)
+        time.sleep(self.delay) 
         output = self.net_connect.send_command(command)
         return output
 

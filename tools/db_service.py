@@ -84,6 +84,19 @@ def populate_table(table):
             con = db)
         df = pd.DataFrame(sql_query)
         df.to_csv(file_path, index = False, header=False, sep=';')
+    elif table == 'netcool_transition':
+        file_path = current_path + '/data/netcool_transition.csv'
+        insert_records = 'INSERT INTO NETCOOL_DEVICES (IP_DCN, CUSTOMER, CID, CPE_MODEL, COUNTRY, CITY, STATE_NAME, LOCATION_DESC, DEPARTMENT)\
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    elif table == 'netcool':
+        file_path = current_path + '/data/netcool.csv'
+        insert_records = 'INSERT INTO NETCOOL_FW (IP_DCN, CUSTOMER, CID, CPE_MODEL, COUNTRY, CITY, STATE_NAME, LOCATION_DESC, DEPARTMENT)\
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        sql_query = pd.read_sql_query("SELECT IP_DCN, CUSTOMER, CID, CPE_MODEL, COUNTRY, CITY, STATE_NAME, LOCATION_DESC, DEPARTMENT\
+                                       FROM (SELECT * FROM NETCOOL_DEVICES WHERE CPE_MODEL REGEXP '\Sorti')",\
+            con = db)
+        df = pd.DataFrame(sql_query)
+        df.to_csv(file_path, index = False, header=False, sep=';')
     else:
         print('Invalid Table!!')
 
@@ -105,6 +118,8 @@ def update_table(table):
         UPDATE_QUERY = 'UPDATE RANCID_DEVICES SET IN_RANCID = 1'
     elif table == 'soc':
         UPDATE_QUERY = 'UPDATE PORTAL_SOC_FW SET IN_PORTAL = 1'
+    elif table == 'netcool':
+        UPDATE_QUERY = 'UPDATE NETCOOL_DEVICES SET IN_NETCOOL = 1'
     else:
         print('Invalid Table!!')
     update_query(UPDATE_QUERY)
@@ -124,10 +139,10 @@ def update_query(query):
     db = get_db()
     db.execute(query)
     db.commit()
-    print(f'QUERY "{query}" run sucessfully!!!')
+    # print(f'QUERY "{query}" run sucessfully!!!')
 
 def alter_query(query):
     db = get_db()
     db.execute(query)
     # db.commit()
-    print(f'QUERY "{query}" run sucessfully!!!')
+    # print(f'QUERY "{query}" run sucessfully!!!')

@@ -28,6 +28,7 @@ def run():
 	GROUP BY IP
     '''
     update_query(UPDATE_SSCD)
+    print(' INSERT INTO CONSOLIDATED_FW SSCD !!!')
 
     sscd_lines = run_query('SELECT * FROM CONSOLIDATED_FW')
     counter = 0
@@ -37,25 +38,27 @@ def run():
         query = db.execute(f"SELECT BACKUP_STATUS, BACKUP_DATE FROM RANCID_DEVICES RD WHERE IP_DCN == '{ip}'").fetchone()
         in_rancid = int(db.execute(f"SELECT COUNT(IP_DCN) FROM RANCID_DEVICES rd WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
         in_portal = int(db.execute(f"SELECT COUNT(IP) FROM PORTAL_SOC_FW PSF WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
+        in_netcool = int(db.execute(f"SELECT COUNT(IP_DCN) FROM NETCOOL_FW ND WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
         if query != None:
             backup_status = query['BACKUP_STATUS']
             backup_date = query['BACKUP_DATE']
             updates.append(f'UPDATE CONSOLIDATED_FW SET BACKUP_STATUS = "{backup_status}", BACKUP_DATE = "{backup_date}", \
-                            IN_RANCID = {in_rancid}, IN_PORTAL = {in_portal} WHERE IP = "{ip}"')
+                            IN_RANCID = {in_rancid}, IN_PORTAL = {in_portal}, IN_NETCOOL = {in_netcool} WHERE IP = "{ip}"')
         else:
             backup_status = 'sin'
             backup_date = 'sin_fecha'
             updates.append(f'UPDATE CONSOLIDATED_FW SET BACKUP_STATUS = "{backup_status}", BACKUP_DATE = "{backup_date}", \
-                            IN_RANCID = {in_rancid}, IN_PORTAL = {in_portal} WHERE IP = "{ip}"')
-        print(ip, in_rancid, in_portal, backup_status, backup_date, sep=' -- ')
+                            IN_RANCID = {in_rancid}, IN_PORTAL = {in_portal}, IN_NETCOOL = {in_netcool} WHERE IP = "{ip}"')
+        # print(ip, in_rancid, in_portal, backup_status, backup_date, sep=' -- ')
         # counter += 1
         # if counter > 199:
         #     break
     # print(updates)
-    print(f'ENLAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
+    #print(f'ENLAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
 
     for update in updates:
         update_query(update)
+    print('UPDATE_SSCD !!!')
 
     updates_rancid = []
     rancid_lines = run_query('SELECT * FROM RANCID_DEVICES')
@@ -63,10 +66,12 @@ def run():
         ip = line['IP_DCN']
         in_sscd = int(db.execute(f"SELECT COUNT(IP) FROM SSCD_CI_SECURITY_IP rd WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
         in_portal = int(db.execute(f"SELECT COUNT(IP) FROM PORTAL_SOC_FW PSF WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
-        updates_rancid.append(f'UPDATE RANCID_DEVICES SET IN_SSCD = {in_sscd}, IN_PORTAL = {in_portal} WHERE IP_DCN = "{ip}"')
+        in_netcool = int(db.execute(f"SELECT COUNT(IP_DCN) FROM NETCOOL_FW ND WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
+        updates_rancid.append(f'UPDATE RANCID_DEVICES SET IN_SSCD = {in_sscd}, IN_PORTAL = {in_portal}, IN_NETCOOL = {in_netcool} WHERE IP_DCN = "{ip}"')
 
     for update in updates_rancid:
         update_query(update)
+    print('UPDATE_RANCID !!!')
 
     updates_portal = []
     portal_lines = run_query('SELECT * FROM PORTAL_SOC_FW')
@@ -74,13 +79,28 @@ def run():
         ip = line['IP']
         in_rancid = int(db.execute(f"SELECT COUNT(IP_DCN) FROM RANCID_DEVICES rd WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
         in_sscd = int(db.execute(f"SELECT COUNT(IP) FROM SSCD_CI_SECURITY_IP rd WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
-        updates_portal.append(f'UPDATE PORTAL_SOC_FW SET IN_RANCID = {in_rancid}, IN_SSCD = {in_sscd} WHERE IP = "{ip}"')
+        in_netcool = int(db.execute(f"SELECT COUNT(IP_DCN) FROM NETCOOL_FW ND WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
+        updates_portal.append(f'UPDATE PORTAL_SOC_FW SET IN_RANCID = {in_rancid}, IN_SSCD = {in_sscd}, IN_NETCOOL = {in_netcool} WHERE IP = "{ip}"')
 
     for update in updates_portal:
         update_query(update)
+    print('UPDATE_PORTAL !!!')
+
+    updates_netcool = []
+    netcool_lines = run_query('SELECT * FROM NETCOOL_FW')
+    for line in netcool_lines:
+        ip = line['IP_DCN']
+        in_sscd = int(db.execute(f"SELECT COUNT(IP) FROM SSCD_CI_SECURITY_IP rd WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
+        in_rancid = int(db.execute(f"SELECT COUNT(IP_DCN) FROM RANCID_DEVICES rd WHERE IP_DCN = '{ip}'").fetchone()['COUNT(IP_DCN)'])
+        in_portal = int(db.execute(f"SELECT COUNT(IP) FROM PORTAL_SOC_FW PSF WHERE IP = '{ip}'").fetchone()['COUNT(IP)'])
+        updates_netcool.append(f'UPDATE NETCOOL_FW SET IN_SSCD = {in_sscd}, IN_PORTAL = {in_portal}, IN_RANCID = {in_rancid} WHERE IP_DCN = "{ip}"')
+
+    for update in updates_netcool:
+        update_query(update)
+    print('UPDATE_NETCOOL !!!')
 
     UPDATE_SCCD_WITH_RANCID = '''
-    INSERT INTO CONSOLIDATED_FW (CONFIG_ITEM, LOCATION_ADDRESS, CUSTOMER_NAME, IP, BACKUP_STATUS, BACKUP_DATE, OS_VERSION, IN_SSCD, IN_PORTAL, IN_RANCID)
+    INSERT INTO CONSOLIDATED_FW (CONFIG_ITEM, LOCATION_ADDRESS, CUSTOMER_NAME, IP, BACKUP_STATUS, BACKUP_DATE, OS_VERSION, IN_SSCD, IN_NETCOOL, IN_PORTAL, IN_RANCID)
 	SELECT
 		CID,
 		LOCATION_DESC,
@@ -90,29 +110,52 @@ def run():
 		BACKUP_DATE,
         OSVERSION,
         IN_SSCD,
+        IN_NETCOOL,
         IN_PORTAL,
         IN_RANCID
 	FROM
 		RANCID_DEVICES
-	WHERE IN_SSCD = 0 AND IN_PORTAL = 0
+	WHERE IN_SSCD = 0 AND IN_PORTAL = 0 AND IN_NETCOOL = 0
     '''
     update_query(UPDATE_SCCD_WITH_RANCID)
+    print('UPDATE_SCCD_WITH_RANCID !!!')
 
     UPDATE_SCCD_WITH_PORTAL = '''
-    INSERT INTO CONSOLIDATED_FW (CONFIG_ITEM, LOCATION_ADDRESS, CUSTOMER_NAME, IP, IN_SSCD, IN_RANCID, IN_PORTAL)
+    INSERT INTO CONSOLIDATED_FW (CONFIG_ITEM, LOCATION_ADDRESS, CUSTOMER_NAME, IP, IN_SSCD, IN_NETCOOL, IN_RANCID, IN_PORTAL)
 	SELECT
 		CID,
 		LOCATION_DESC,
 		CUSTOMER,
 		IP,
         IN_SSCD,
+        IN_NETCOOL,
         IN_RANCID,
         IN_PORTAL
 	FROM
 		PORTAL_SOC_FW
-	WHERE IN_SSCD = 0 AND IN_RANCID = 0
+	WHERE IN_SSCD = 0 AND IN_RANCID = 0 AND IN_NETCOOL = 0
     '''
     update_query(UPDATE_SCCD_WITH_PORTAL)
+    print('UPDATE_SCCD_WITH_PORTAL !!!')
+
+    UPDATE_SCCD_WITH_NETCOOL = '''
+    INSERT INTO CONSOLIDATED_FW (CONFIG_ITEM, LOCATION_ADDRESS, CUSTOMER_NAME, IP, MODEL, IN_SSCD, IN_NETCOOL, IN_RANCID, IN_PORTAL)
+	SELECT
+		CID,
+		LOCATION_DESC,
+		CUSTOMER,
+		IP_DCN,
+        CPE_MODEL,
+        IN_SSCD,
+        IN_NETCOOL,
+        IN_RANCID,
+        IN_PORTAL
+	FROM
+		NETCOOL_FW
+	WHERE IN_SSCD = 0 AND IN_RANCID = 0 AND IN_PORTAL = 0
+    '''
+    update_query(UPDATE_SCCD_WITH_NETCOOL)
+    print('UPDATE_SCCD_WITH_NETCOOL !!!')
 
     updates_backups = []
     backup_lines = run_query('SELECT * FROM CONSOLIDATED_FW WHERE IN_RANCID > 0')
@@ -137,6 +180,7 @@ def run():
 
     for update in updates_backups:
         update_query(update)
+    print('UPDATE_BACKUPS !!!')
 
     print(f'FINAL TIME ------------------ {datetime.now()}')
     print(f'ENLAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')

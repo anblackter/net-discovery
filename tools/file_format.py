@@ -2,7 +2,7 @@ import os
 import re
 
 class RancidFileFormat():
-    def __init__(self, file : str = 'resultado_final.txt'):
+    def __init__(self, file : str = 'resultado_total.txt'):
         self.file = file
         self.current_path = os.path.abspath(os.path.dirname('__file__')) + '/data/'
         self.read_file()
@@ -22,7 +22,8 @@ class RancidFileFormat():
             for line in lines:
                 if line.startswith('#### '):
                     customer = line.replace('#### ', '')
-                elif line.endswith('####') != True and line != '' and line.find('fortigate') >= 0 and line.find('FIREWALL') >= 0:
+                # elif line.endswith('####') != True and line != '' and line.find('fortigate') >= 0 and line.find('FIREWALL') >= 0: #ONLY FIREWALLS
+                elif line.endswith('####') != True and line != '' and line.find('fortigate') >= 0: #ALL FORTIGATES
                     try:
                         cid = re.findall(
                             r"(?:[0-9]{5}[A-Z]{2})|(?:[0-9]{7}[A-Z]{2})|(?:[0-9]{8}[A-Z]{2})|(?:[0-9]{10}[A-Z]{2})",

@@ -30,6 +30,9 @@ def read_args():
     elif "-p" in arguments:
         populate_table('rancid')
         update_table('rancid')
+        populate_table('netcool_transition')
+        populate_table('netcool')
+        update_table('netcool')
         populate_table('soc_transition')
         populate_table('soc')
         update_table('soc')

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import re
 from datetime import datetime, timedelta, date
 from time import sleep
@@ -14,7 +15,19 @@ def get_elapsep_time(initial_time):
     elapsed_time = datetime.strptime(str(diff_time), '%H:%M:%S.%f')
     return elapsed_time.strftime('%H:%M:%S.%f')
 
-def run():
+def read_args():
+    arguments = sys.argv
+    arguments.pop(0)
+
+    if  'CRED_LIST_FW_1' in arguments:
+        credentials = Credenditals.CRED_LIST_FW_1
+        ssh(credentials)
+    elif 'CRED_LIST_FW_2' in arguments:
+        credentials = Credenditals.CRED_LIST_FW_2
+        ssh(credentials)
+
+
+def ssh(credentials):
     initial_time = datetime.now()
     current_path = os.path.abspath(os.path.dirname('__file__'))
     print(f'INITIAL TIME ------------------ {initial_time}')
@@ -45,7 +58,7 @@ def run():
         firewall = {
                 'vendor' : 'fortinet',
                 'hostname' : ip,
-                'credential_list' : Credenditals.CRED_LIST_FW_2,
+                'credential_list' : credentials,
                 'port' : port,
                 'session_log' : current_path + '/logs/ssh/' + ip
             }
@@ -100,6 +113,12 @@ def run():
 
     print(f'FINAL TIME ------------------ {datetime.now()}')
     print(f'ELAPSED TIME ------------------ {get_elapsep_time(initial_time)} (H:M:S.ms)')
+
+def run():
+    try:
+        read_args()
+    except KeyboardInterrupt:
+        print('\nKeyboard Interrupt')
 
 if __name__ == '__main__':
     run()
